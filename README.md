@@ -5,7 +5,7 @@ A simple QuadTree in Swift, based on pseudocode from [Wikipedia](http://en.wikip
 
 
 ##Note##
-Last tested on Xcode 6 (Beta 4). Needs an update.
+Last tested in Xcode 7.2.1
 
 
 ##License##
