@@ -8,105 +8,40 @@
 
 import CoreLocation
 
-enum QTRNodeQuadrant: Int {
-    case NE = 0, SE, SW, NW
+public enum QTRNodeQuadrant: Int {
+    case NE = 0,
+    SE,
+    SW,
+    NW
 }
 
-//Basic Conversion functions.From DSAlgorithm.
-func radianToDegrees(radians: Double) -> Double
-{
-    return (radians * (180/M_PI))
-}
-
-func degreesToRadians(degrees: Double) -> Double
-{
-    return (degrees * (M_PI/180))
-}
-
-///Returns 1/-1 depending on sign of value.
-func sgn(value: Double) -> Int
-{
-    return Int(abs(value)/value)
-}
-
-private func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withDistance distance: CLLocationDistance) -> [CLLocationDegrees]
-{
-    let MIN_LAT = -M_PI_2
-    let MAX_LAT = M_PI_2
-    let MIN_LONG = -M_PI
-    let MAX_LONG = M_PI
-    
-    let R: Double = 6378137
-    let r = distance/R
-    
-    if CLLocationCoordinate2DIsValid(coordinate) {
-        let latRadian = degreesToRadians(coordinate.latitude)
-        let longRadian = degreesToRadians(coordinate.longitude)
-        
-        
-        var latMin = latRadian - r
-        var latMax = latRadian + r
-        var longMin = 0.0
-        var longMax = 0.0
-        
-        if latMin > MIN_LAT && latMax < MAX_LAT {
-            let deltaLong = asin(sin(r)/cos(latRadian))
-            
-            longMin = longRadian - deltaLong
-            if longMin < MIN_LONG {
-                longMin += 2.0 * M_PI
-            }
-            
-            longMax = longRadian + deltaLong
-            if longMax > MAX_LONG {
-                longMax -= 2.0 * M_PI
-            }
-        }
-        else {
-            latMin = max(latMin, MIN_LAT)
-            latMax = min(latMax, MAX_LAT)
-            longMin = MIN_LONG
-            longMax = MAX_LONG
-        }
-        
-        return [longMin, latMin, longMax, latMax].map{
-            (var rads) -> CLLocationDegrees in
-            return radianToDegrees(rads)
-        }
-        
-    }
-    
-    return []
-}
-
-
-struct QTRSpan {
+public struct QTRSpan {
     var longitudeDelta: CLLocationDegrees
     var latitudeDelta: CLLocationDegrees
     
-    init (_ longitudeDelta: CLLocationDegrees, _ latitudeDelta: CLLocationDegrees) {
+    public init (_ longitudeDelta: CLLocationDegrees, _ latitudeDelta: CLLocationDegrees) {
         self.latitudeDelta = latitudeDelta
         self.longitudeDelta = longitudeDelta
     }
     
-    init (_ bbox: [CLLocationDegrees]) {
+    public init (_ bbox: [CLLocationDegrees]) {
         self.latitudeDelta = bbox[3] - bbox[1]
         self.longitudeDelta = bbox[2] - bbox[0]
     }
 }
 
-class QTRNodePoint {
+public class QTRNodePoint {
     var latitude: Double?
     var longitude: Double?
     
-    var name: String
-    var coordinate2D: CLLocationCoordinate2D {
+    public var name: String
+    public var coordinate2D: CLLocationCoordinate2D {
         get {
             return CLLocationCoordinate2DMake(self.latitude!, self.longitude!)
         }
     }
     
-    init (_ latitude: Double, _ longitude: Double, _ name: String) {
+    public init (_ latitude: Double, _ longitude: Double, _ name: String) {
         self.latitude = latitude
         self.longitude = longitude
         self.name = name
@@ -114,20 +49,32 @@ class QTRNodePoint {
         //        super.init()
     }
     
-    init (_ coordinate: CLLocationCoordinate2D, _ name: String) {
+    public init (_ coordinate: CLLocationCoordinate2D, _ name: String) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
         self.name = name
     }
     
-    init(_ coordinate: [CLLocationDegrees]) {
+    public init(_ coordinate: [CLLocationDegrees]) {
         self.latitude = coordinate[1]
         self.longitude = coordinate[0]
         self.name = "Unknown"
     }
+    
+    public func distanceFrom(coordinate: CLLocationCoordinate2D) -> Double
+    {
+        var distance = equiRectangularDistanceBetweenCoordinates(self.coordinate2D, otherCoordinate: coordinate)
+        
+        if distance > 6000.0 {
+            distance = haversineDistanceBetweenCoordinates(self.coordinate2D, otherCoordinate: coordinate)
+        }
+        
+        return distance
+    }
+
 }
 
-class QTRBBox {
+public class QTRBBox {
     var lowLatitude: Double
     var highLatitude: Double
     var lowLongitude: Double
@@ -140,7 +87,7 @@ class QTRBBox {
     }
     var span: QTRSpan
     
-    init (_ lowLongitude: Double, _ lowLatitude: Double, _ highLongitude: Double, _ highLatitude: Double) {
+    public init (_ lowLongitude: Double, _ lowLatitude: Double, _ highLongitude: Double, _ highLatitude: Double) {
         self.lowLatitude = lowLatitude
         self.highLatitude = highLatitude
         self.lowLongitude = lowLongitude
@@ -150,7 +97,7 @@ class QTRBBox {
         //        super.init()
     }
     
-    init (_ bbox: [CLLocationDegrees]) {
+    public init (_ bbox: [CLLocationDegrees]) {
         self.lowLatitude = bbox[1]
         self.highLatitude = bbox[3]
         self.lowLongitude = bbox[0]
@@ -158,7 +105,7 @@ class QTRBBox {
         self.span = QTRSpan(bbox)
     }
     
-    convenience init (_ midpoint: CLLocationCoordinate2D, _ radius: Double) {
+    public convenience init (_ midpoint: CLLocationCoordinate2D, _ radius: Double) {
         self.init(bboxAroundCoordinate(midpoint, withDistance: radius))
     }
     
@@ -230,26 +177,28 @@ class QTRBBox {
     }
 }
 
-class QTRNode {
+public class QTRNode {
     var ne: QTRNode?
     var se: QTRNode?
     var sw: QTRNode?
     var nw: QTRNode?
     
+    public weak var parent: QTRNode?
+    
     var bbox: QTRBBox
     var bucketCapacity: Int
     
-    var points: Array<QTRNodePoint>
+    public var points: Array<QTRNodePoint>
     var size: Int {
         return self.points.count
     }
-    init (_ bbox: QTRBBox, _ bucketCapacity: Int) {
+    public init (_ bbox: QTRBBox, _ bucketCapacity: Int) {
         self.bbox = bbox
         self.points = []
         self.bucketCapacity = bucketCapacity
     }
     
-    convenience init (_ points: [QTRNodePoint], _ bbox: QTRBBox, _ bucketCapacity: Int) {
+    public convenience init (_ points: [QTRNodePoint], _ bbox: QTRBBox, _ bucketCapacity: Int) {
         self.init(bbox, bucketCapacity)
         for p: QTRNodePoint in points {
             self.insert(p)
@@ -262,18 +211,22 @@ class QTRNode {
         
         let ne = QTRBBox(c.longitude, c.latitude, box.highLongitude, box.highLatitude)
         self.ne = QTRNode(ne, self.bucketCapacity)
+        self.ne?.parent = self
         
         let se = QTRBBox(c.longitude, box.lowLatitude, box.highLongitude, c.latitude)
         self.se = QTRNode(se, self.bucketCapacity)
+        self.se?.parent = self
         
         let sw = QTRBBox(box.lowLongitude, box.lowLatitude, c.longitude, c.latitude)
         self.sw = QTRNode(sw, self.bucketCapacity)
+        self.sw?.parent = self
         
         let nw = QTRBBox(box.lowLongitude, c.latitude, c.longitude, box.highLatitude)
         self.nw = QTRNode(nw, self.bucketCapacity)
+        self.nw?.parent = self
     }
     
-    private func insert(point: QTRNodePoint) -> Bool {
+    func insert(point: QTRNodePoint) -> Bool {
         if !self.bbox.containsCoordinate(point.coordinate2D) {
             return false
         }
@@ -283,7 +236,7 @@ class QTRNode {
             return true
         }
         
-        if self.ne? == nil  {
+        if self.ne == nil  {
             self.split()
         }
         
@@ -295,7 +248,7 @@ class QTRNode {
         return false
     }
     
-    func get(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
+    public func get(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
         if !self.bbox.intersects(boundingBox: range) {
             return
         }
@@ -306,7 +259,7 @@ class QTRNode {
             }
         }
         
-        if self.ne? == nil {
+        if self.ne == nil {
             return
         }
         
@@ -316,10 +269,10 @@ class QTRNode {
         self.nw?.get(pointsIn: range, andApply: map)
     }
     
-    func traverse(andApply map: (QTRNode) -> ()) {
+    public func traverse(andApply map: (QTRNode) -> ()) {
         map(self)
         
-        if self.ne? == nil {
+        if self.ne == nil {
             return
         }
         
@@ -329,6 +282,53 @@ class QTRNode {
         self.nw?.traverse(andApply: map)
     }
     
+    public func getByTraversingUp(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
+        if !self.bbox.intersects(boundingBox: range) {
+            return
+        }
+        
+        for p in self.points {
+            if range.containsCoordinate(p.coordinate2D) {
+                map(p)
+            }
+        }
+        
+        if self.parent == nil {
+            return
+        }
+        
+        self.parent?.getByTraversingUp(pointsIn: range, andApply: map)
+    }
+    
+    public func traverseUp(andApply map: (QTRNode) -> ()) {
+        map(self)
+        
+        if self.parent == nil {
+            return
+        }
+        
+        self.parent?.traverseUp(andApply: map)
+    }
+    
+    public func nodeContaining(point: QTRNodePoint) -> QTRNode? {
+        var n: QTRNode?
+        
+        if self.bbox.containsCoordinate(point.coordinate2D) {
+            n = self
+            
+            if self.ne != nil {
+                var c: QTRNode? = self.ne?.nodeContaining(point)
+                c = c == nil ? self.se?.nodeContaining(point) : c
+                c = c == nil ? self.sw?.nodeContaining(point) : c
+                c = c == nil ? self.nw?.nodeContaining(point) : c
+                if c != nil {
+                    n = c
+                }
+            }
+        }
+        return n
+    }
+    
     deinit {
         print("DeInitializing")
         self.ne = nil
@@ -336,21 +336,4 @@ class QTRNode {
         self.sw = nil
         self.nw = nil
     }
-}
-
-func generateRandomPoint(inRange bbox: QTRBBox) -> CLLocationCoordinate2D {
-    let p = Double(arc4random_uniform(250))*(bbox.highLatitude - bbox.lowLatitude)/100 + bbox.lowLatitude
-    let q = Double(arc4random_uniform(250))*(bbox.highLongitude - bbox.lowLongitude)/100 + bbox.lowLongitude
-    
-    return CLLocationCoordinate2DMake(p, q)
-}
-
-func generateQTRPointArray(ofLength length: Int, inRange bbox: QTRBBox) -> [QTRNodePoint] {
-    var returnArray = [QTRNodePoint]()
-    
-    for i in 0..<length {
-        returnArray.append(QTRNodePoint(generateRandomPoint(inRange: bbox), "RandomPoint_" + "\(i)"))
-    }
-    
-    return returnArray
 }
