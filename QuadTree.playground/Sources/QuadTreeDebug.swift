@@ -30,9 +30,9 @@ public struct QTRSpan {
     }
 }
 
-public class QTRNodePoint {
-    var latitude: Double?
+public class QTRNodePoint: CustomStringConvertible {
     var longitude: Double?
+    var latitude: Double?
     
     public var name: String
     public var coordinate2D: CLLocationCoordinate2D {
@@ -41,23 +41,27 @@ public class QTRNodePoint {
         }
     }
     
-    public init (_ latitude: Double, _ longitude: Double, _ name: String) {
-        self.latitude = latitude
+    public var description: String {
+        return "(\(longitude ?? 0), \(latitude ?? 0)): \(name)"
+    }
+    
+    public init (_ longitude: Double, _ latitude: Double, _ name: String) {
         self.longitude = longitude
+        self.latitude = latitude
         self.name = name
         
         //        super.init()
     }
     
     public init (_ coordinate: CLLocationCoordinate2D, _ name: String) {
-        self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
+        self.latitude = coordinate.latitude
         self.name = name
     }
     
     public init(_ coordinate: [CLLocationDegrees]) {
-        self.latitude = coordinate[1]
         self.longitude = coordinate[0]
+        self.latitude = coordinate[1]
         self.name = "Unknown"
     }
     
@@ -74,18 +78,22 @@ public class QTRNodePoint {
 
 }
 
-public class QTRBBox {
-    var lowLatitude: Double
-    var highLatitude: Double
-    var lowLongitude: Double
-    var highLongitude: Double
+public class QTRBBox: CustomStringConvertible {
+    public var lowLatitude: Double
+    public var highLatitude: Double
+    public var lowLongitude: Double
+    public var highLongitude: Double
     
-    var center: CLLocationCoordinate2D {
+    public var center: CLLocationCoordinate2D {
         get {
             return centerOfBoundingBox([self.lowLongitude, self.lowLatitude, self.highLongitude, self.highLatitude])
         }
     }
     var span: QTRSpan
+    
+    public var description: String {
+        return "\(lowLongitude), \(lowLatitude), \(highLongitude), \(highLatitude)"
+    }
     
     public init (_ lowLongitude: Double, _ lowLatitude: Double, _ highLongitude: Double, _ highLatitude: Double) {
         self.lowLatitude = lowLatitude
@@ -109,7 +117,7 @@ public class QTRBBox {
         self.init(bboxAroundCoordinate(midpoint, withDistance: radius))
     }
     
-    private func centerOfBoundingBox(bbox: [CLLocationDegrees]) -> CLLocationCoordinate2D
+    public func centerOfBoundingBox(bbox: [CLLocationDegrees]) -> CLLocationCoordinate2D
     {
         //        let upperRight = CLLocationCoordinate2DMake(bbox[3], bbox[2])
         //        let lowerLeft = CLLocationCoordinate2DMake(bbox[1],  bbox[0])
@@ -135,7 +143,7 @@ public class QTRBBox {
         return [self.lowLongitude, self.lowLatitude, self.highLongitude, self.highLatitude]
     }
     
-    private func containsCoordinate(coordinate: CLLocationCoordinate2D ) -> Bool
+    public func containsCoordinate(coordinate: CLLocationCoordinate2D ) -> Bool
     {
         var isWithinLongitudes: Bool = false
         var isWithinLatitudes: Bool = false
@@ -146,7 +154,7 @@ public class QTRBBox {
         }
         
         //for Longitudes
-        if sgn(self.highLongitude) == sgn(self.lowLongitude) || self.lowLongitude < self.highLongitude {
+        if sgn(self.highLongitude == 0.0 ? self.highLongitude + 0.1E6 : self.highLongitude) == sgn(self.lowLongitude == 0.0 ? self.lowLongitude + 0.1E6 : self.lowLongitude) || self.lowLongitude < self.highLongitude {
             if self.lowLongitude < coordinate.longitude && coordinate.longitude <= self.highLongitude {
                 isWithinLongitudes = true
             }
@@ -159,9 +167,9 @@ public class QTRBBox {
         return isWithinLatitudes && isWithinLongitudes
     }
     
-    private func intersects(boundingBox bbox: QTRBBox) -> Bool
+    public func intersects(boundingBox bbox: QTRBBox) -> Bool
     {
-        if !(sgn(self.highLongitude) == sgn(self.lowLongitude)) || !(self.lowLongitude < self.highLongitude) {
+        if !(sgn(self.highLongitude == 0.0 ? self.highLongitude + 0.1E6 : self.highLongitude) == sgn(self.lowLongitude == 0.0 ? self.lowLongitude + 0.1E6 : self.lowLongitude)) || !(self.lowLongitude < self.highLongitude) {
             if !(sgn(bbox.highLongitude) == sgn(bbox.lowLongitude)) || !(bbox.lowLongitude < bbox.highLongitude) {
                 return false
             }
@@ -177,7 +185,7 @@ public class QTRBBox {
     }
 }
 
-public class QTRNode {
+public class QTRNode: CustomStringConvertible {
     var ne: QTRNode?
     var se: QTRNode?
     var sw: QTRNode?
@@ -189,9 +197,19 @@ public class QTRNode {
     var bucketCapacity: Int
     
     public var points: Array<QTRNodePoint>
-    var size: Int {
+    
+    public var size: Int {
         return self.points.count
     }
+    
+    public var isLeaf: Bool {
+        return self.ne == nil
+    }
+    
+    public var description: String {
+        return "\(size), \(ne), \(se), \(sw), \(se)"
+    }
+    
     public init (_ bbox: QTRBBox, _ bucketCapacity: Int) {
         self.bbox = bbox
         self.points = []
@@ -224,14 +242,24 @@ public class QTRNode {
         let nw = QTRBBox(box.lowLongitude, c.latitude, c.longitude, box.highLatitude)
         self.nw = QTRNode(nw, self.bucketCapacity)
         self.nw?.parent = self
+        
+        if self.size == bucketCapacity {
+            for point in self.points {
+                if self.ne!.insert(point) { continue }
+                else if self.se!.insert(point) { continue }
+                else if self.sw!.insert(point) { continue }
+                else if !self.nw!.insert(point) {print("ERROR: Split Failed")}
+            }
+            self.points = []
+        }
     }
     
-    func insert(point: QTRNodePoint) -> Bool {
-        if !self.bbox.containsCoordinate(point.coordinate2D) {
+    public func insert(point: QTRNodePoint) -> Bool {
+        if !self.bbox.containsCoordinate(point.coordinate2D) && self.ne == nil {
             return false
         }
         
-        if self.size < self.bucketCapacity {
+        if self.size < self.bucketCapacity && self.ne == nil {
             self.points.append(point)
             return true
         }

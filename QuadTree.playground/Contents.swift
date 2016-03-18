@@ -49,7 +49,7 @@ func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, and
     
 }
 
-
+/*
 //var node: QTRNode? = QTRNode(QTRBBox([ -116,19,-53,72 ]),4)
 let userPoint = QTRNodePoint(42.725222, -84.477949 ,"userPoint")
 //let userBox = QTRBBox(userPoint.coordinate2D, 92.0)
@@ -85,3 +85,34 @@ nearestNeighbours(toPoint: userPoint, startingAt: node!, andApply: { (nd: QTRNod
     print(nd.name)
     returnArray.append(nd)
 })
+*/
+
+let parent = QTRNode(QTRBBox([-5, -5, 5, 5]), 2)
+let p1 = QTRNodePoint(1,1, "Point 1")
+let p2 = QTRNodePoint(-1,-1, "Point 2")
+let p3 = QTRNodePoint(-1,1, "Point 3")
+let p4 = QTRNodePoint(1,-1, "Point 4")
+let p5 = QTRNodePoint(-2,2, "Point 5")
+let p6 = QTRNodePoint(-3,3, "Point 6")
+
+parent.insert(p1)
+parent.insert(p2)
+parent.insert(p3)
+parent.insert(p4)
+parent.insert(p5)
+parent.insert(p6)
+
+let userPoint = QTRNodePoint(-1.23, -1.25 ,"userPoint")
+var returnArray = [QTRNodePoint]()
+
+
+nearestNeighbours(toPoint: userPoint, startingAt: parent, andApply: { (nd: QTRNodePoint) -> () in
+    print(nd.name)
+    returnArray.append(nd)
+})
+
+//parent.traverse { (node) -> () in
+//    print(node.points)
+//}
+
+//print("ENTERED \(point.name)")
