@@ -89,7 +89,7 @@ public class QTRBBox: CustomStringConvertible {
             return centerOfBoundingBox([self.lowLongitude, self.lowLatitude, self.highLongitude, self.highLatitude])
         }
     }
-    var span: QTRSpan
+    public var span: QTRSpan
     
     public var description: String {
         return "\(lowLongitude), \(lowLatitude), \(highLongitude), \(highLatitude)"
@@ -193,7 +193,7 @@ public class QTRNode: CustomStringConvertible {
     
     public weak var parent: QTRNode?
     
-    var bbox: QTRBBox
+    public var bbox: QTRBBox
     var bucketCapacity: Int
     
     public var points: Array<QTRNodePoint>
@@ -264,7 +264,7 @@ public class QTRNode: CustomStringConvertible {
             return true
         }
         
-        if self.ne == nil  {
+        if self.size == self.bucketCapacity && self.ne == nil  {
             self.split()
         }
         
