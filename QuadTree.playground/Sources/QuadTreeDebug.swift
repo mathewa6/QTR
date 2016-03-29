@@ -16,8 +16,8 @@ public enum QTRNodeQuadrant: Int {
 }
 
 public struct QTRSpan {
-    var longitudeDelta: CLLocationDegrees
-    var latitudeDelta: CLLocationDegrees
+    public var longitudeDelta: CLLocationDegrees
+    public var latitudeDelta: CLLocationDegrees
     
     public init (_ longitudeDelta: CLLocationDegrees, _ latitudeDelta: CLLocationDegrees) {
         self.latitudeDelta = latitudeDelta

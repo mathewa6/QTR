@@ -95,8 +95,8 @@ nearestNeighbours(toPoint: userPoint, startingAt: node!, andApply: { (nd: QTRNod
 //let tet = QTRNodePoint(-84.480940, 42.724254,"Engineering")
 //let tit = QTRNodePoint(-84.477949, 42.725222 ,"userPoint")
 //let testDistance = equiRectangularDistanceBetweenCoordinates(tit.coordinate2D, otherCoordinate: tet.coordinate2D)
-
-let parent = QTRNode(QTRBBox([-5, -5, 5, 5]), 2)
+let parentBBox = QTRBBox([-5, -5, 5, 5])
+let parent = QTRNode(parentBBox, 2)
 let p1 = QTRNodePoint(1,1, "Point 1")
 let p2 = QTRNodePoint(-1,-1, "Point 2")
 let p3 = QTRNodePoint(-1,1, "Point 3")
@@ -112,6 +112,9 @@ parent.insert(p4)
 //parent.insert(p6)
 
 let userPoint = QTRNodePoint(1, -1 ,"userPoint")
+let userNode = parent.nodeContaining(userPoint)
+userNode?.bbox.span
+let userBBox = bboxAroundCoordinate(userPoint.coordinate2D, withSpan: (userNode?.bbox.span)!)
 var returnArray = [QTRNodePoint]()
 
 
