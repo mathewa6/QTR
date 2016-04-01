@@ -170,6 +170,7 @@ public class QTRBBox: CustomStringConvertible {
     public func intersects(boundingBox bbox: QTRBBox) -> Bool
     {
         if !(sgn(self.highLongitude == 0.0 ? self.highLongitude + 0.1E6 : self.highLongitude) == sgn(self.lowLongitude == 0.0 ? self.lowLongitude + 0.1E6 : self.lowLongitude)) || !(self.lowLongitude < self.highLongitude) {
+            // Remove !(sgn(bbox.highLongitude) == sgn(bbox.lowLongitude)) for flat(debug)coordinate and not wrapped around systems.
             if !(sgn(bbox.highLongitude) == sgn(bbox.lowLongitude)) || !(bbox.lowLongitude < bbox.highLongitude) {
                 return false
             }

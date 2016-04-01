@@ -50,10 +50,14 @@ func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, and
 }
 
 func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTRNode, andApply map: (QTRNodePoint) -> ()) {
-    let n = node.nodeContaining(point)
-    let q = node.bbox.span
+    let nodeContainer = node.nodeContaining(point)
+    let nodeBoxSpan = nodeContainer!.parent!.bbox.span
     
-    let d = bboxAroundCoordinate(point.coordinate2D, withDistance: 25)
+    let bboxArray = bboxAroundCoordinate(point.coordinate2D, withSpan: nodeBoxSpan)
+    let bbox = QTRBBox(bboxArray)
+    
+    node.get(pointsIn: bbox, andApply: map)
+    
 }
 /*
 //var node: QTRNode? = QTRNode(QTRBBox([ -116,19,-53,72 ]),4)
@@ -101,15 +105,15 @@ let p1 = QTRNodePoint(1,1, "Point 1")
 let p2 = QTRNodePoint(-1,-1, "Point 2")
 let p3 = QTRNodePoint(-1,1, "Point 3")
 let p4 = QTRNodePoint(2,-2, "Point 4")
-//let p5 = QTRNodePoint(-2,2, "Point 5")
-//let p6 = QTRNodePoint(-3,3, "Point 6")
+let p5 = QTRNodePoint(-2,2, "Point 5")
+let p6 = QTRNodePoint(-3,3, "Point 6")
 
 parent.insert(p1)
 parent.insert(p2)
 parent.insert(p3)
 parent.insert(p4)
-//parent.insert(p5)
-//parent.insert(p6)
+parent.insert(p5)
+parent.insert(p6)
 
 let userPoint = QTRNodePoint(1, -1 ,"userPoint")
 let userNode = parent.nodeContaining(userPoint)
@@ -127,6 +131,7 @@ nearestNeighboursAlternate(toPoint: userPoint, startingAt: parent, andApply: { (
     print(nd.name)
     returnArray.append(nd)
 })
+returnArray
 //parent.traverse { (node) -> () in
 //    print(node.points)
 //}
