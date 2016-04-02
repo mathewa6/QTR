@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 RCPD. All rights reserved.
 //
 
+// TODO: - http://stackoverflow.com/questions/24047991/does-swift-have-documentation-comments-or-tools
+
 import CoreLocation
 
 public enum QTRNodeQuadrant: Int {
@@ -15,6 +17,7 @@ public enum QTRNodeQuadrant: Int {
     NW
 }
 
+// MARK: - QTRSpan class methods
 public struct QTRSpan {
     public var longitudeDelta: CLLocationDegrees
     public var latitudeDelta: CLLocationDegrees
@@ -30,6 +33,7 @@ public struct QTRSpan {
     }
 }
 
+// MARK: - QTRNodePoint methods
 public class QTRNodePoint: CustomStringConvertible {
     var longitude: Double?
     var latitude: Double?
@@ -78,6 +82,7 @@ public class QTRNodePoint: CustomStringConvertible {
 
 }
 
+// MARK: - QTRBBox methods
 public class QTRBBox: CustomStringConvertible {
     public var lowLatitude: Double
     public var highLatitude: Double
@@ -186,6 +191,7 @@ public class QTRBBox: CustomStringConvertible {
     }
 }
 
+// MARK: - QTRNode methods
 public class QTRNode: CustomStringConvertible {
     var ne: QTRNode?
     var se: QTRNode?
@@ -208,7 +214,8 @@ public class QTRNode: CustomStringConvertible {
     }
     
     public var description: String {
-        return "\(size), \(ne), \(se), \(sw), \(se)"
+        let split = self.ne != nil ? "Yes" : "No"
+        return "pointsContained: \(size), hasChildren: \(split), boundingBox: \(bbox)"
     }
     
     public init (_ bbox: QTRBBox, _ bucketCapacity: Int) {

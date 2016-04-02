@@ -117,7 +117,8 @@ parent.insert(p6)
 
 let userPoint = QTRNodePoint(1, -1 ,"userPoint")
 let userNode = parent.nodeContaining(userPoint)
-userNode?.bbox.span
+userNode?.bbox.span.latitudeDelta
+userNode?.bbox.span.longitudeDelta
 let userBBox = bboxAroundCoordinate(userPoint.coordinate2D, withSpan: (userNode?.bbox.span)!)
 var returnArray = [QTRNodePoint]()
 

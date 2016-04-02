@@ -10,11 +10,20 @@ public func degreesToRadians(degrees: Double) -> Double {
     return (degrees * (M_PI/180))
 }
 
-///Returns 1/-1 depending on sign of value.
+/// - Returns 1/-1 for non  zero values.
+/// - Returns 0 for error
+///
 public func sgn(value: Double) -> Int {
+    if value == 0 {
+        return 0
+    }
     return Int(abs(value)/value)
 }
 
+/// Returns a box around a given coordinate with a normalized distance as it's side.
+/// 
+/// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
+/// - returns: An array of CLLocationDegrees.
 public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withDistance distance: CLLocationDistance) -> [CLLocationDegrees] {
     let MIN_LAT = -M_PI_2
     let MAX_LAT = M_PI_2
