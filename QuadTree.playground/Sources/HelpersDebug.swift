@@ -73,6 +73,10 @@ public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withDistanc
     return []
 }
 
+/// Returns a box around a given coordinate using the given span struct to calculate bounds.
+///
+/// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
+/// - returns: An array of CLLocationDegrees.
 public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withSpan span: QTRSpan) -> [CLLocationDegrees] {
     if CLLocationCoordinate2DIsValid(coordinate) {
         let latitudeRadius = span.latitudeDelta/2.0
