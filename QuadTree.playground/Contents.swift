@@ -49,9 +49,10 @@ func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, and
     
 }
 
-func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTRNode, andApply map: (QTRNodePoint) -> ()) {
+func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTRNode, canUseParent parent: Bool, andApply map: (QTRNodePoint) -> ()) {
     let nodeContainer = node.nodeContaining(point)
-    let nodeBoxSpan = nodeContainer!.parent!.bbox.span
+    
+    let nodeBoxSpan = parent ? nodeContainer!.parent!.bbox.span : nodeContainer!.bbox.span
     
     let bboxArray = bboxAroundCoordinate(point.coordinate2D, withSpan: nodeBoxSpan)
     let bbox = QTRBBox(bboxArray)
@@ -128,7 +129,7 @@ var returnArray = [QTRNodePoint]()
 //    returnArray.append(nd)
 //})
 
-nearestNeighboursAlternate(toPoint: userPoint, startingAt: parent, andApply: { (nd: QTRNodePoint) -> () in
+nearestNeighboursAlternate(toPoint: userPoint, startingAt: parent, canUseParent: true, andApply: { (nd: QTRNodePoint) -> () in
     print(nd.name)
     returnArray.append(nd)
 })
