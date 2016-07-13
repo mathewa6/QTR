@@ -18,7 +18,7 @@ public enum QTRNodeQuadrant: Int {
 }
 
 // MARK: - QTRSpan class methods
-public struct QTRSpan {
+public struct QTRSpan: CustomStringConvertible {
     public var longitudeDelta: CLLocationDegrees
     public var latitudeDelta: CLLocationDegrees
     
@@ -30,6 +30,10 @@ public struct QTRSpan {
     public init (_ bbox: [CLLocationDegrees]) {
         self.latitudeDelta = bbox[3] - bbox[1]
         self.longitudeDelta = bbox[2] - bbox[0]
+    }
+    
+    public var description: String {
+        return "\(self.longitudeDelta), \(self.latitudeDelta)"
     }
 }
 

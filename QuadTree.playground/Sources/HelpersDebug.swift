@@ -82,6 +82,8 @@ public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withSpan sp
         let latitudeRadius = span.latitudeDelta/2.0
         let longitudeRadius = span.longitudeDelta/2.0
         
+        //Check for wraparound cases. i.e 180 +/- x
+        
         let latMin = coordinate.latitude - latitudeRadius
         let latMax = coordinate.latitude + latitudeRadius
         let longMin = coordinate.longitude - longitudeRadius
