@@ -11,10 +11,10 @@
 import CoreLocation
 
 public enum QTRNodeQuadrant: Int {
-    case NE = 0,
-    SE,
-    SW,
-    NW
+    case ne = 0,
+    se,
+    sw,
+    nw
 }
 
 // MARK: - QTRSpan class methods
@@ -38,18 +38,18 @@ public struct QTRSpan: CustomStringConvertible {
 }
 
 // MARK: - QTRNodePoint methods
-public class QTRNodePoint: CustomStringConvertible {
+open class QTRNodePoint: CustomStringConvertible {
     var longitude: Double?
     var latitude: Double?
     
-    public var name: String
-    public var coordinate2D: CLLocationCoordinate2D {
+    open var name: String
+    open var coordinate2D: CLLocationCoordinate2D {
         get {
             return CLLocationCoordinate2DMake(self.latitude!, self.longitude!)
         }
     }
     
-    public var description: String {
+    open var description: String {
         return "(\(longitude ?? 0), \(latitude ?? 0)): \(name)"
     }
     
@@ -73,7 +73,7 @@ public class QTRNodePoint: CustomStringConvertible {
         self.name = "Unknown"
     }
     
-    public func distanceFrom(coordinate: CLLocationCoordinate2D) -> Double
+    open func distanceFrom(_ coordinate: CLLocationCoordinate2D) -> Double
     {
         var distance = equiRectangularDistanceBetweenCoordinates(self.coordinate2D, otherCoordinate: coordinate)
         
@@ -87,20 +87,20 @@ public class QTRNodePoint: CustomStringConvertible {
 }
 
 // MARK: - QTRBBox methods
-public class QTRBBox: CustomStringConvertible {
-    public var lowLatitude: Double
-    public var highLatitude: Double
-    public var lowLongitude: Double
-    public var highLongitude: Double
+open class QTRBBox: CustomStringConvertible {
+    open var lowLatitude: Double
+    open var highLatitude: Double
+    open var lowLongitude: Double
+    open var highLongitude: Double
     
-    public var center: CLLocationCoordinate2D {
+    open var center: CLLocationCoordinate2D {
         get {
             return centerOfBoundingBox([self.lowLongitude, self.lowLatitude, self.highLongitude, self.highLatitude])
         }
     }
-    public var span: QTRSpan
+    open var span: QTRSpan
     
-    public var description: String {
+    open var description: String {
         return "\(lowLongitude), \(lowLatitude), \(highLongitude), \(highLatitude)"
     }
     
@@ -126,7 +126,7 @@ public class QTRBBox: CustomStringConvertible {
         self.init(bboxAroundCoordinate(midpoint, withDistance: radius))
     }
     
-    public func centerOfBoundingBox(bbox: [CLLocationDegrees]) -> CLLocationCoordinate2D
+    open func centerOfBoundingBox(_ bbox: [CLLocationDegrees]) -> CLLocationCoordinate2D
     {
         //        let upperRight = CLLocationCoordinate2DMake(bbox[3], bbox[2])
         //        let lowerLeft = CLLocationCoordinate2DMake(bbox[1],  bbox[0])
@@ -148,11 +148,11 @@ public class QTRBBox: CustomStringConvertible {
         return CLLocationCoordinate2DMake((bbox[3] + bbox[1])/2.0, (bbox[2] + bbox[0])/2.0)
     }
     
-    private func asArray() -> [CLLocationDegrees] {
+    fileprivate func asArray() -> [CLLocationDegrees] {
         return [self.lowLongitude, self.lowLatitude, self.highLongitude, self.highLatitude]
     }
     
-    public func containsCoordinate(coordinate: CLLocationCoordinate2D ) -> Bool
+    open func containsCoordinate(_ coordinate: CLLocationCoordinate2D ) -> Bool
     {
         var isWithinLongitudes: Bool = false
         var isWithinLatitudes: Bool = false
@@ -176,7 +176,7 @@ public class QTRBBox: CustomStringConvertible {
         return isWithinLatitudes && isWithinLongitudes
     }
     
-    public func intersects(boundingBox bbox: QTRBBox) -> Bool
+    open func intersects(boundingBox bbox: QTRBBox) -> Bool
     {
         if !(sgn(self.highLongitude == 0.0 ? self.highLongitude + 0.1E6 : self.highLongitude) == sgn(self.lowLongitude == 0.0 ? self.lowLongitude + 0.1E6 : self.lowLongitude)) || !(self.lowLongitude < self.highLongitude) {
             // Remove !(sgn(bbox.highLongitude) == sgn(bbox.lowLongitude)) for flat(debug)coordinate and not wrapped around systems.
@@ -196,28 +196,28 @@ public class QTRBBox: CustomStringConvertible {
 }
 
 // MARK: - QTRNode methods
-public class QTRNode: CustomStringConvertible {
+open class QTRNode: CustomStringConvertible {
     var ne: QTRNode?
     var se: QTRNode?
     var sw: QTRNode?
     var nw: QTRNode?
     
-    public weak var parent: QTRNode?
+    open weak var parent: QTRNode?
     
-    public var bbox: QTRBBox
+    open var bbox: QTRBBox
     var bucketCapacity: Int
     
-    public var points: Array<QTRNodePoint>
+    open var points: Array<QTRNodePoint>
     
-    public var size: Int {
+    open var size: Int {
         return self.points.count
     }
     
-    public var isLeaf: Bool {
+    open var isLeaf: Bool {
         return self.ne == nil
     }
     
-    public var description: String {
+    open var description: String {
         let split = self.ne != nil ? "Yes" : "No"
         return "pointsContained: \(size), hasChildren: \(split), boundingBox: \(bbox)"
     }
@@ -235,7 +235,7 @@ public class QTRNode: CustomStringConvertible {
         }
     }
     
-    private func split() {
+    fileprivate func split() {
         let box = self.bbox
         let c = box.center
         
@@ -266,7 +266,7 @@ public class QTRNode: CustomStringConvertible {
         }
     }
     
-    public func insert(point: QTRNodePoint) -> Bool {
+    open func insert(_ point: QTRNodePoint) -> Bool {
         if !self.bbox.containsCoordinate(point.coordinate2D) && self.ne == nil {
             return false
         }
@@ -288,7 +288,7 @@ public class QTRNode: CustomStringConvertible {
         return false
     }
     
-    public func get(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
+    open func get(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
         if !self.bbox.intersects(boundingBox: range) {
             return
         }
@@ -309,7 +309,7 @@ public class QTRNode: CustomStringConvertible {
         self.nw?.get(pointsIn: range, andApply: map)
     }
     
-    public func traverse(andApply map: (QTRNode) -> ()) {
+    open func traverse(andApply map: (QTRNode) -> ()) {
         map(self)
         
         if self.ne == nil {
@@ -322,7 +322,7 @@ public class QTRNode: CustomStringConvertible {
         self.nw?.traverse(andApply: map)
     }
     
-    public func getByTraversingUp(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
+    open func getByTraversingUp(pointsIn range: QTRBBox, andApply map: (QTRNodePoint) -> ()) {
         if !self.bbox.intersects(boundingBox: range) {
             return
         }
@@ -340,7 +340,7 @@ public class QTRNode: CustomStringConvertible {
         self.parent?.getByTraversingUp(pointsIn: range, andApply: map)
     }
     
-    public func traverseUp(andApply map: (QTRNode) -> ()) {
+    open func traverseUp(andApply map: (QTRNode) -> ()) {
         map(self)
         
         if self.parent == nil {
@@ -350,7 +350,7 @@ public class QTRNode: CustomStringConvertible {
         self.parent?.traverseUp(andApply: map)
     }
     
-    public func nodeContaining(point: QTRNodePoint) -> QTRNode? {
+    open func nodeContaining(_ point: QTRNodePoint) -> QTRNode? {
         var n: QTRNode?
         
         if self.bbox.containsCoordinate(point.coordinate2D) {

@@ -2,18 +2,18 @@ import Foundation
 import CoreLocation
 
 //Basic Conversion functions.From DSAlgorithm.
-public func radianToDegrees(radians: Double) -> Double {
+public func radianToDegrees(_ radians: Double) -> Double {
     return (radians * (180/M_PI))
 }
 
-public func degreesToRadians(degrees: Double) -> Double {
+public func degreesToRadians(_ degrees: Double) -> Double {
     return (degrees * (M_PI/180))
 }
 
 /// - Returns 1/-1 for non  zero values.
 /// - Returns 0 for error
 ///
-public func sgn(value: Double) -> Int {
+public func sgn(_ value: Double) -> Int {
     if value == 0 {
         return 0
     }
@@ -24,7 +24,7 @@ public func sgn(value: Double) -> Int {
 /// 
 /// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
 /// - returns: An array of CLLocationDegrees.
-public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withDistance distance: CLLocationDistance) -> [CLLocationDegrees] {
+public func bboxAroundCoordinate(_ coordinate: CLLocationCoordinate2D, withDistance distance: CLLocationDistance) -> [CLLocationDegrees] {
     let MIN_LAT = -M_PI_2
     let MAX_LAT = M_PI_2
     let MIN_LONG = -M_PI
@@ -77,7 +77,7 @@ public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withDistanc
 ///
 /// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
 /// - returns: An array of CLLocationDegrees.
-public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withSpan span: QTRSpan) -> [CLLocationDegrees] {
+public func bboxAroundCoordinate(_ coordinate: CLLocationCoordinate2D, withSpan span: QTRSpan) -> [CLLocationDegrees] {
     if CLLocationCoordinate2DIsValid(coordinate) {
         let latitudeRadius = span.latitudeDelta/2.0
         let longitudeRadius = span.longitudeDelta/2.0
@@ -94,7 +94,7 @@ public func bboxAroundCoordinate(coordinate: CLLocationCoordinate2D, withSpan sp
     return []
 }
 
-public func haversineDistanceBetweenCoordinates(coordinate: CLLocationCoordinate2D, otherCoordinate: CLLocationCoordinate2D) -> Double
+public func haversineDistanceBetweenCoordinates(_ coordinate: CLLocationCoordinate2D, otherCoordinate: CLLocationCoordinate2D) -> Double
 {
     let R: Double = 6378137
     let deltaLat = degreesToRadians((otherCoordinate.latitude - coordinate.latitude))
@@ -110,7 +110,7 @@ public func haversineDistanceBetweenCoordinates(coordinate: CLLocationCoordinate
     
 }
 
-public func equiRectangularDistanceBetweenCoordinates(coordinate: CLLocationCoordinate2D, otherCoordinate: CLLocationCoordinate2D) -> Double {
+public func equiRectangularDistanceBetweenCoordinates(_ coordinate: CLLocationCoordinate2D, otherCoordinate: CLLocationCoordinate2D) -> Double {
     let R: Double = 6378137
     let deltaLat = degreesToRadians((otherCoordinate.latitude - coordinate.latitude))
     let deltaLong = degreesToRadians((otherCoordinate.longitude - coordinate.longitude))

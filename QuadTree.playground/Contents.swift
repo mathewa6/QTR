@@ -7,7 +7,21 @@
 
 import Foundation
 
-func closestPointInNode(node: QTRNode, toPoint point: QTRNodePoint) -> (QTRNodePoint?, Double?) {
+// FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
+// Consider refactoring the code to use the non-optional operators.
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+
+func closestPointInNode(_ node: QTRNode, toPoint point: QTRNodePoint) -> (QTRNodePoint?, Double?) {
     var distance: Double?
     var returnPoint: QTRNodePoint?
     
@@ -28,7 +42,7 @@ func closestPointInNode(node: QTRNode, toPoint point: QTRNodePoint) -> (QTRNodeP
     return (returnPoint,distance ?? 80.0)
 }
 
-func scaledValue(x: Double, alpha: Double, beta: Double, max: Double) -> Double{
+func scaledValue(_ x: Double, alpha: Double, beta: Double, max: Double) -> Double{
     return max*(exp(-1.0 * alpha * pow(x, beta)))
 }
 
