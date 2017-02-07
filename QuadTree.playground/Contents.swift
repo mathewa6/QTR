@@ -9,12 +9,10 @@ import Foundation
 
 // FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
 // Consider refactoring the code to use the non-optional operators.
-fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+fileprivate func < <T : Comparable>(lhs: T, rhs: T) -> Bool {
   switch (lhs, rhs) {
-  case let (l?, r?):
+  case let (l, r):
     return l < r
-  case (nil, _?):
-    return true
   default:
     return false
   }
@@ -27,7 +25,7 @@ func closestPointInNode(_ node: QTRNode, toPoint point: QTRNodePoint) -> (QTRNod
     
     for p in node.points {
         let temp = point.distanceFrom(p.coordinate2D)
-        if distance == nil || temp < distance {
+        if distance == nil || temp < distance! {
             if temp > 80.0 {
                 distance = temp
                 returnPoint = p
@@ -51,8 +49,8 @@ func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, and
     
     let (p, d) = closestPointInNode(n, toPoint: point)
     let factor = scaledValue(d!, alpha: 0.03, beta: 0.65, max: 3.0)
-//    p?.name
-//    
+    p?.name
+//
 //    d!
 //    d!*factor
     let userB = QTRBBox(point.coordinate2D, factor * d!)
