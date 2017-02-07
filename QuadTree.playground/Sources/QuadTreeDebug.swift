@@ -114,16 +114,92 @@ open class QTRBBox: CustomStringConvertible {
         //        super.init()
     }
     
-    public init (_ bbox: [CLLocationDegrees]) {
-        self.lowLatitude = bbox[1]
-        self.highLatitude = bbox[3]
-        self.lowLongitude = bbox[0]
-        self.highLongitude = bbox[2]
-        self.span = QTRSpan(bbox)
+    public init (withArray bbox: [CLLocationDegrees]) {
+        var assignment: [CLLocationDegrees] = bbox
+        if assignment.isEmpty {
+            assignment = [0, 0, 0, 0]
+        }
+        
+        self.lowLatitude = assignment[1]
+        self.highLatitude = assignment[3]
+        self.lowLongitude = assignment[0]
+        self.highLongitude = assignment[2]
+        self.span = QTRSpan(assignment)
     }
     
-    public convenience init (_ midpoint: CLLocationCoordinate2D, _ radius: Double) {
-        self.init(bboxAroundCoordinate(midpoint, withDistance: radius))
+    /// Returns a box around a given coordinate with a normalized distance as it's side.
+    ///
+    /// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
+    /// - returns: An array of CLLocationDegrees.
+    public convenience init(aroundCoordinate coordinate: CLLocationCoordinate2D, withBreadth distance: CLLocationDistance) {
+        let MIN_LAT = -M_PI_2
+        let MAX_LAT = M_PI_2
+        let MIN_LONG = -M_PI
+        let MAX_LONG = M_PI
+        
+        let R: Double = 6378137
+        let r = distance/R
+        
+        if CLLocationCoordinate2DIsValid(coordinate) {
+            let latRadian = degreesToRadians(coordinate.latitude)
+            let longRadian = degreesToRadians(coordinate.longitude)
+            
+            
+            var latMin = latRadian - r
+            var latMax = latRadian + r
+            var longMin = 0.0
+            var longMax = 0.0
+            
+            if latMin > MIN_LAT && latMax < MAX_LAT {
+                let deltaLong = asin(sin(r)/cos(latRadian))
+                
+                longMin = longRadian - deltaLong
+                if longMin < MIN_LONG {
+                    longMin += 2.0 * M_PI
+                }
+                
+                longMax = longRadian + deltaLong
+                if longMax > MAX_LONG {
+                    longMax -= 2.0 * M_PI
+                }
+            }
+            else {
+                latMin = max(latMin, MIN_LAT)
+                latMax = min(latMax, MAX_LAT)
+                longMin = MIN_LONG
+                longMax = MAX_LONG
+            }
+            
+            let initArray: [CLLocationDegrees] = [longMin, latMin, longMax, latMax].map{
+                (rads) -> CLLocationDegrees in
+                return radianToDegrees(rads)
+            }
+            self.init(withArray: initArray)
+        } else {
+            self.init(withArray: [])
+        }
+    }
+    
+    /// Returns a box around a given coordinate using the given span struct to calculate bounds.
+    ///
+    /// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
+    /// - returns: An array of CLLocationDegrees.
+    public convenience init(aroundCoordinate coordinate: CLLocationCoordinate2D, withSpan span: QTRSpan) {
+        if CLLocationCoordinate2DIsValid(coordinate) {
+            let latitudeRadius = span.latitudeDelta/2.0
+            let longitudeRadius = span.longitudeDelta/2.0
+            
+            //Check for wraparound cases. i.e 180 +/- x
+            
+            let latMin = coordinate.latitude - latitudeRadius
+            let latMax = coordinate.latitude + latitudeRadius
+            let longMin = coordinate.longitude - longitudeRadius
+            let longMax = coordinate.longitude + longitudeRadius
+            
+            self.init(withArray: [longMin, latMin, longMax, latMax])
+        } else {
+            self.init(withArray: [])
+        }
     }
     
     open func centerOfBoundingBox(_ bbox: [CLLocationDegrees]) -> CLLocationCoordinate2D

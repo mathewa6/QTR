@@ -53,7 +53,7 @@ func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, and
 //
 //    d!
 //    d!*factor
-    let userB = QTRBBox(point.coordinate2D, factor * d!)
+    let userB = QTRBBox(aroundCoordinate: point.coordinate2D, withBreadth: factor * d!)
 //    node.getByTraversingUp(pointsIn: userB, andApply: { (nd: QTRNodePoint) -> () in
 //        print(nd.name)
 //    })
@@ -66,8 +66,7 @@ func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTR
     
     let nodeBoxSpan = parent ? nodeContainer!.parent!.bbox.span : nodeContainer!.bbox.span
     
-    let bboxArray = bboxAroundCoordinate(point.coordinate2D, withSpan: nodeBoxSpan)
-    let bbox = QTRBBox(bboxArray)
+    let bbox = QTRBBox(aroundCoordinate: point.coordinate2D, withSpan: nodeBoxSpan)
     
     node.get(pointsIn: bbox, andApply: map)
     
@@ -77,7 +76,7 @@ func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTR
 let userPoint = QTRNodePoint(-84.477949, 42.725222 ,"userPoint")
 //let userBox = QTRBBox(userPoint.coordinate2D, 92.0)
 
-let randomBox = QTRBBox([ -84.5035622, 42.7127855, -84.4550801, 42.7367203 ])
+let randomBox = QTRBBox(withArray: [ -84.5035622, 42.7127855, -84.4550801, 42.7367203 ])
 //let pointArray = generateQTRPointArray(ofLength: 10, inRange: randomBox)
 var pointArray = [QTRNodePoint]()
 
