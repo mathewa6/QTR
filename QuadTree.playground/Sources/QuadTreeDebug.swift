@@ -307,7 +307,7 @@ open class QTRNode: CustomStringConvertible {
     public convenience init (_ points: [QTRNodePoint], _ bbox: QTRBBox, _ bucketCapacity: Int) {
         self.init(bbox, bucketCapacity)
         for p: QTRNodePoint in points {
-            self.insert(p)
+            _ = self.insert(p)
         }
     }
     
