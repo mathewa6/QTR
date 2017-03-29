@@ -160,6 +160,90 @@ func clusteredAnnotations(in rect: MKMapRect,
     return annotations
 }
 
+
+class QTRNodePointView: MKAnnotationView {
+    
+    private var countLabel: UILabel = UILabel(frame: .zero)
+    
+    public var count: Int = 0 {
+        didSet {
+            let newBounds: CGRect = CGRect(x: 0,
+                                           y: 0,
+                                           width: CGFloat(roundf(44.0 * scaledSize(forValue: self.count))),
+                                           height: CGFloat(roundf(44.0 * scaledSize(forValue: self.count))))
+            self.frame = centeredRect(forRect: newBounds, center: self.center)
+            
+            let newLabelBounds: CGRect = CGRect(x: 0,
+                                                y: 0,
+                                                width: newBounds.size.width/1.3,
+                                                height: newBounds.size.height/1.3)
+            self.countLabel.frame = centeredRect(forRect: newLabelBounds, center: CGPoint(x: newBounds.midX,
+                                                                                          y: newBounds.midY))
+            self.countLabel.text = String(self.count)
+            
+            self.setNeedsDisplay()
+        }
+    }
+    
+    private let alphax: Float = 0.3
+    private let betax: Float = 0.4
+    
+    override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
+        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
+        self.setup()
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        self.setup()
+    }
+    
+    private func centeredRect(forRect rect: CGRect, center: CGPoint) -> CGRect {
+        return CGRect(x: center.x - rect.size.width/2.0,
+                      y: center.y - rect.size.height/2.0,
+                      width: rect.size.width,
+                      height: rect.size.height)
+    }
+    
+    private func scaledSize(forValue value: Int) -> Float {
+        return 1.0/(1.0 + expf(-1 * alphax * powf(Float(value), betax)))
+    }
+    
+    private func setup() {
+        self.countLabel.frame = self.frame
+        self.countLabel.backgroundColor = .clear
+        self.countLabel.textColor = .white
+        self.countLabel.textAlignment = .center
+        self.countLabel.adjustsFontSizeToFitWidth = true
+        self.countLabel.numberOfLines = 1
+        self.countLabel.font = UIFont.boldSystemFont(ofSize: 15.0)
+        self.countLabel.baselineAdjustment = .alignCenters
+        
+        self.addSubview(self.countLabel)
+    }
+    
+    override func draw(_ rect: CGRect) {
+        let ctx: CGContext = UIGraphicsGetCurrentContext()!
+        ctx.setAllowsAntialiasing(true)
+        
+        let outerCircleStrokeColor: UIColor = UIColor(white: 0, alpha: 0.25)
+        let innerCircleStrokeColor: UIColor = .white
+        let innerCircleFillColor: UIColor = UIColor(red: 1.0, green: 95.0/255.0, blue: 42.0/255.0, alpha: 1.0)
+        
+        let circleFrame: CGRect = rect.insetBy(dx: 4.0, dy: 4.0)
+        ctx.setStrokeColor(outerCircleStrokeColor.cgColor)
+        ctx.setLineWidth(5.0)
+        ctx.strokeEllipse(in: circleFrame)
+        
+        ctx.setStrokeColor(innerCircleStrokeColor.cgColor)
+        ctx.setLineWidth(4.0)
+        ctx.strokeEllipse(in: circleFrame)
+        
+        ctx.setFillColor(innerCircleFillColor.cgColor)
+        ctx.fillEllipse(in: circleFrame)
+    }
+}
+
 func update(mapView map: MKMapView, annotations: [QTRNodePoint]) {
     var before = Set<QTRNodePoint>(map.annotations as! [QTRNodePoint])
     let after = Set<QTRNodePoint>(annotations)
@@ -180,6 +264,22 @@ func update(mapView map: MKMapView, annotations: [QTRNodePoint]) {
     }
 }
 
+func addBounceAnimation(toView view: UIView) {
+    let bounce = CAKeyframeAnimation(keyPath: "transform.scale")
+    bounce.values = [0.05, 1.1, 0.9, 1.0]
+    bounce.duration = 0.6
+    
+    var timingFunctions: [CAMediaTimingFunction] = []
+    
+    for _ in 0..<4 {
+        timingFunctions.append(CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut))
+    }
+    bounce.timingFunctions = timingFunctions
+    bounce.isRemovedOnCompletion = false
+    
+    view.layer.add(bounce, forKey: "bounce")
+}
+
 class TestDelegate: NSObject, MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
         mapView.removeAnnotations(mapView.annotations)
@@ -188,6 +288,20 @@ class TestDelegate: NSObject, MKMapViewDelegate {
             zoomLevel(fromScale: MKZoomScale(scale))
             let annos = clusteredAnnotations(in: mapView.visibleMapRect, atScale: scale, fromNode: node!)
             update(mapView: mapView, annotations: annos as! [QTRNodePoint])
+        }
+    }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        let r = QTRNodePointView()
+        let x = annotation as! QTRNodePoint
+        r.count = Int(x.name)!
+        
+        return r
+    }
+    
+    func mapView(_ mapView: MKMapView, didAdd views: [MKAnnotationView]) {
+        for view in views {
+            addBounceAnimation(toView: view)
         }
     }
 }
@@ -202,9 +316,9 @@ map.region = region
 map.delegate = delegate
 // map.addAnnotations(pointArray)
 
-//let scale = Double(map.bounds.size.width)/map.visibleMapRect.size.width
-//zoomLevel(fromScale: MKZoomScale(scale))
-//let annos = clusteredAnnotations(in: map.visibleMapRect, atScale: scale, fromNode: node!)
-//map.addAnnotations(annos)
+let scale = Double(map.bounds.size.width)/map.visibleMapRect.size.width
+zoomLevel(fromScale: MKZoomScale(scale))
+let annos = clusteredAnnotations(in: map.visibleMapRect, atScale: scale, fromNode: node!)
+map.addAnnotations(annos)
 
 PlaygroundPage.current.liveView = map
