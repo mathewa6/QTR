@@ -294,6 +294,7 @@ class TestDelegate: NSObject, MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         let r = QTRNodePointView()
         let x = annotation as! QTRNodePoint
+        r.isOpaque = false
         r.count = Int(x.name)!
         
         return r
