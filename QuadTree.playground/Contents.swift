@@ -97,11 +97,54 @@ nearestNeighboursAlternate(toPoint: userPoint, startingAt: node!, canUseParent: 
 //})
 returnArray
 
+func clusteredAnnotations(in rect: MKMapRect,
+                          atScale zoomScale: Double,
+                          fromNode node: QTRNode) -> [MKAnnotation] {
+    let cellSize = 88.0
+    let scaleFactor = zoomScale/cellSize
+    
+    let minX: Double = floor(MKMapRectGetMinX(rect) * scaleFactor)
+    let maxX: Double = floor(MKMapRectGetMaxX(rect) * scaleFactor);
+    let minY = floor(MKMapRectGetMinY(rect) * scaleFactor);
+    let maxY = floor(MKMapRectGetMaxY(rect) * scaleFactor);
+    
+    var annotations: [MKAnnotation] = []
+    
+    for x in stride(from: minX, through: maxX, by: 1.0) {
+        for y in stride(from: minY, through: maxY, by: 1.0) {
+            let mapRect: MKMapRect = MKMapRectMake(x/scaleFactor,
+                                                   y/scaleFactor,
+                                                   1.0/scaleFactor,
+                                                   1.0/scaleFactor)
+            var totalX = 0.0, totalY = 0.0, count = 0
+            let box: QTRBBox = QTRBBox(forMapRect: mapRect)
+            node.get(pointsIn: box,
+                     andApply: { (point) in
+                        totalX += point.coordinate.latitude
+                        totalY += point.coordinate.longitude
+                        count += 1
+            })
+            
+            if count >= 1 {
+                let coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: totalX/Double(count), longitude: totalY/Double(count))
+                let anno = QTRNodePoint(coordinate, String(count))
+                annotations.append(anno)
+            }
+        }
+    }
+    
+    return annotations
+}
+
 let frame: CGRect = CGRect(x: 0, y: 0, width: 360, height: 360)
 let map: MKMapView = MKMapView(frame: frame)
 let region: MKCoordinateRegion = MKCoordinateRegion(center: userPoint.coordinate,
                                                     span: (node?.bbox.span.mapKitSpan)!)
 map.region = region
 // map.addAnnotations(pointArray)
+
+let scale = Double(map.bounds.size.width)/map.visibleMapRect.size.width
+let annos = clusteredAnnotations(in: map.visibleMapRect, atScale: scale, fromNode: node!)
+map.addAnnotations(annos)
 
 PlaygroundPage.current.liveView = map

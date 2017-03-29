@@ -111,6 +111,19 @@ open class QTRBBox: CustomStringConvertible {
     }
     open var span: QTRSpan
     
+    public var mapRect: MKMapRect {
+        let topLeft: MKMapPoint = MKMapPointForCoordinate(CLLocationCoordinate2D(latitude: self.highLatitude,
+                                                                                 longitude: self.lowLongitude))
+        let bottomRight: MKMapPoint = MKMapPointForCoordinate(CLLocationCoordinate2D(latitude: self.lowLatitude,
+                                                                                     longitude: self.highLongitude))
+        
+        return MKMapRectMake(topLeft.x,
+                             bottomRight.y,
+                             fabs(bottomRight.x - topLeft.x),
+                             fabs(bottomRight.y - topLeft.y))
+        
+    }
+    
     open var description: String {
         return "\(lowLongitude), \(lowLatitude), \(highLongitude), \(highLatitude)"
     }
@@ -189,6 +202,20 @@ open class QTRBBox: CustomStringConvertible {
         } else {
             self.init(withArray: [])
         }
+    }
+    
+    public convenience init(forMapRect mapRect: MKMapRect) {
+        let topLeft: CLLocationCoordinate2D = MKCoordinateForMapPoint(mapRect.origin)
+        let xMax = MKMapRectGetMaxX(mapRect)
+        let yMax = MKMapRectGetMaxY(mapRect)
+        let bottomRight: CLLocationCoordinate2D = MKCoordinateForMapPoint(MKMapPointMake(xMax, yMax))
+        
+        let latMin = bottomRight.latitude
+        let latMax = topLeft.latitude
+        let longMin = topLeft.longitude
+        let longMax = bottomRight.longitude
+        
+        self.init(withArray: [longMin, latMin, longMax, latMax])
     }
     
     /// Returns a box around a given coordinate using the given span struct to calculate bounds.
