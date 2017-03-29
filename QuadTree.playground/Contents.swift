@@ -97,11 +97,34 @@ nearestNeighboursAlternate(toPoint: userPoint, startingAt: node!, canUseParent: 
 //})
 returnArray
 
+func zoomLevel(fromScale scale: MKZoomScale) -> Int {
+    let tileCount = MKMapSizeWorld.width / 256.0
+    let zoomLevelMax = log2(tileCount)
+    let zoomLevel = max(0, zoomLevelMax + Double(floor(log2(scale) + 0.5)))
+    
+    return Int(zoomLevel)
+}
+
+func cellSize(fromScale scale: MKZoomScale) -> Double {
+    let level = zoomLevel(fromScale: scale)
+    
+    switch level {
+    case 13,14,15:
+        return 64.0
+    case 16,17,18:
+        return 32.0
+    case 19:
+        return 16.0
+    default:
+        return 88.0
+    }
+}
+
 func clusteredAnnotations(in rect: MKMapRect,
                           atScale zoomScale: Double,
                           fromNode node: QTRNode) -> [MKAnnotation] {
-    let cellSize = 88.0
-    let scaleFactor = zoomScale/cellSize
+    let size = cellSize(fromScale: MKZoomScale(zoomScale))
+    let scaleFactor = zoomScale/size
     
     let minX: Double = floor(MKMapRectGetMinX(rect) * scaleFactor)
     let maxX: Double = floor(MKMapRectGetMaxX(rect) * scaleFactor);
@@ -144,6 +167,7 @@ map.region = region
 // map.addAnnotations(pointArray)
 
 let scale = Double(map.bounds.size.width)/map.visibleMapRect.size.width
+zoomLevel(fromScale: MKZoomScale(scale))
 let annos = clusteredAnnotations(in: map.visibleMapRect, atScale: scale, fromNode: node!)
 map.addAnnotations(annos)
 
