@@ -160,6 +160,26 @@ func clusteredAnnotations(in rect: MKMapRect,
     return annotations
 }
 
+func update(mapView map: MKMapView, annotations: [QTRNodePoint]) {
+    var before = Set<QTRNodePoint>(map.annotations as! [QTRNodePoint])
+    let after = Set<QTRNodePoint>(annotations)
+    
+    var keep = Set(before)
+    keep.intersection(after)
+    
+    var add = Set(after)
+    add.subtract(keep)
+    
+    var remove = Set(before)
+    remove.subtract(after)
+    
+    DispatchQueue.main.async {
+//        map.removeAnnotations(map.annotations)
+        map.addAnnotations(Array(add))
+        map.removeAnnotations(Array(remove))
+    }
+}
+
 class TestDelegate: NSObject, MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
         mapView.removeAnnotations(mapView.annotations)
@@ -167,9 +187,7 @@ class TestDelegate: NSObject, MKMapViewDelegate {
             let scale = Double(mapView.bounds.size.width)/mapView.visibleMapRect.size.width
             zoomLevel(fromScale: MKZoomScale(scale))
             let annos = clusteredAnnotations(in: mapView.visibleMapRect, atScale: scale, fromNode: node!)
-            DispatchQueue.main.async {
-                mapView.addAnnotations(annos)
-            }
+            update(mapView: mapView, annotations: annos as! [QTRNodePoint])
         }
     }
 }
