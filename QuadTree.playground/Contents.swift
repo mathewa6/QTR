@@ -149,7 +149,8 @@ func clusteredAnnotations(in rect: MKMapRect,
             })
             
             if count >= 1 {
-                let coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: totalX/Double(count), longitude: totalY/Double(count))
+                let coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: totalX/Double(count),
+                                                                                longitude: totalY/Double(count))
                 let anno = QTRNodePoint(coordinate, String(count))
                 annotations.append(anno)
             }
@@ -159,16 +160,33 @@ func clusteredAnnotations(in rect: MKMapRect,
     return annotations
 }
 
+class TestDelegate: NSObject, MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        mapView.removeAnnotations(mapView.annotations)
+        DispatchQueue.global(qos: .default).async {
+            let scale = Double(mapView.bounds.size.width)/mapView.visibleMapRect.size.width
+            zoomLevel(fromScale: MKZoomScale(scale))
+            let annos = clusteredAnnotations(in: mapView.visibleMapRect, atScale: scale, fromNode: node!)
+            DispatchQueue.main.async {
+                mapView.addAnnotations(annos)
+            }
+        }
+    }
+}
+
 let frame: CGRect = CGRect(x: 0, y: 0, width: 360, height: 360)
 let map: MKMapView = MKMapView(frame: frame)
 let region: MKCoordinateRegion = MKCoordinateRegion(center: userPoint.coordinate,
                                                     span: (node?.bbox.span.mapKitSpan)!)
+let delegate: TestDelegate = TestDelegate()
+
 map.region = region
+map.delegate = delegate
 // map.addAnnotations(pointArray)
 
-let scale = Double(map.bounds.size.width)/map.visibleMapRect.size.width
-zoomLevel(fromScale: MKZoomScale(scale))
-let annos = clusteredAnnotations(in: map.visibleMapRect, atScale: scale, fromNode: node!)
-map.addAnnotations(annos)
+//let scale = Double(map.bounds.size.width)/map.visibleMapRect.size.width
+//zoomLevel(fromScale: MKZoomScale(scale))
+//let annos = clusteredAnnotations(in: map.visibleMapRect, atScale: scale, fromNode: node!)
+//map.addAnnotations(annos)
 
 PlaygroundPage.current.liveView = map
