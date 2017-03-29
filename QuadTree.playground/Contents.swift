@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import MapKit
+import PlaygroundSupport
 
 // FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
 // Consider refactoring the code to use the non-optional operators.
@@ -14,60 +16,6 @@ fileprivate func < <T : Comparable>(lhs: T, rhs: T) -> Bool {
   case let (l, r):
     return l < r
   }
-}
-
-
-func closestPointInNode(_ node: QTRNode, toPoint point: QTRNodePoint) -> (QTRNodePoint?, Double?) {
-    var distance: Double?
-    var returnPoint: QTRNodePoint?
-    
-    for p in node.points {
-        let temp = point.distanceFrom(p.coordinate2D)
-        if distance == nil || temp < distance! {
-            if temp > 80.0 {
-                distance = temp
-                returnPoint = p
-            }
-        }
-    }
-    
-    if returnPoint == nil && distance == nil && node.parent != nil{
-        (returnPoint,distance) = closestPointInNode(node.parent!, toPoint: point)
-    }
-    
-    return (returnPoint,distance ?? 80.0)
-}
-
-func scaledValue(_ x: Double, alpha: Double, beta: Double, max: Double) -> Double{
-    return max*(exp(-1.0 * alpha * pow(x, beta)))
-}
-
-func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, andApply map: (QTRNodePoint) -> ()) {
-    let n = node.nodeContaining(point) ?? node
-    
-    let (p, d) = closestPointInNode(n, toPoint: point)
-    let factor = scaledValue(d!, alpha: 0.03, beta: 0.65, max: 3.0)
-    p?.name
-//
-//    d!
-//    d!*factor
-    let userB = QTRBBox(aroundCoordinate: point.coordinate2D, withBreadth: factor * d!)
-//    node.getByTraversingUp(pointsIn: userB, andApply: { (nd: QTRNodePoint) -> () in
-//        print(nd.name)
-//    })
-    node.get(pointsIn: userB, andApply: map)
-    
-}
-
-func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTRNode, canUseParent parent: Bool, andApply map: (QTRNodePoint) -> ()) {
-    let nodeContainer = node.nodeContaining(point)
-    
-    let nodeBoxSpan = parent ? nodeContainer!.parent!.bbox.span : nodeContainer!.bbox.span
-    
-    let bbox = QTRBBox(aroundCoordinate: point.coordinate2D, withSpan: nodeBoxSpan)
-    
-    node.get(pointsIn: bbox, andApply: map)
-    
 }
 
 //var node: QTRNode? = QTRNode(QTRBBox([ -116,19,-53,72 ]),4)
@@ -148,3 +96,12 @@ nearestNeighboursAlternate(toPoint: userPoint, startingAt: node!, canUseParent: 
 //    returnArray.append(nd)
 //})
 returnArray
+
+let frame: CGRect = CGRect(x: 0, y: 0, width: 360, height: 360)
+let map: MKMapView = MKMapView(frame: frame)
+let region: MKCoordinateRegion = MKCoordinateRegion(center: userPoint.coordinate,
+                                                    span: (node?.bbox.span.mapKitSpan)!)
+map.region = region
+// map.addAnnotations(pointArray)
+
+PlaygroundPage.current.liveView = map

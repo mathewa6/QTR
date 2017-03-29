@@ -9,6 +9,7 @@
 // TODO: - http://stackoverflow.com/questions/24047991/does-swift-have-documentation-comments-or-tools
 
 import CoreLocation
+import MapKit
 
 public enum QTRNodeQuadrant: Int {
     case ne = 0,
@@ -21,6 +22,10 @@ public enum QTRNodeQuadrant: Int {
 public struct QTRSpan: CustomStringConvertible {
     public var longitudeDelta: CLLocationDegrees
     public var latitudeDelta: CLLocationDegrees
+    public var mapKitSpan: MKCoordinateSpan {
+        return MKCoordinateSpan(latitudeDelta: self.latitudeDelta,
+                                longitudeDelta: self.longitudeDelta)
+    }
     
     public init (_ longitudeDelta: CLLocationDegrees, _ latitudeDelta: CLLocationDegrees) {
         self.latitudeDelta = latitudeDelta
@@ -38,7 +43,13 @@ public struct QTRSpan: CustomStringConvertible {
 }
 
 // MARK: - QTRNodePoint methods
-open class QTRNodePoint: CustomStringConvertible {
+open class QTRNodePoint: NSObject, MKAnnotation {
+    
+    public var coordinate: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: self.latitude!,
+                                      longitude: self.longitude!)
+    }
+
     var longitude: Double?
     var latitude: Double?
     
@@ -49,7 +60,7 @@ open class QTRNodePoint: CustomStringConvertible {
         }
     }
     
-    open var description: String {
+    override open var description: String {
         return "(\(longitude ?? 0), \(latitude ?? 0)): \(name)"
     }
     
@@ -132,10 +143,10 @@ open class QTRBBox: CustomStringConvertible {
     /// - note: The return array is formatted as [lowLongitude, lowLatitude, highLongitude, highLatitude]
     /// - returns: An array of CLLocationDegrees.
     public convenience init(aroundCoordinate coordinate: CLLocationCoordinate2D, withBreadth distance: CLLocationDistance) {
-        let MIN_LAT = -M_PI_2
-        let MAX_LAT = M_PI_2
-        let MIN_LONG = -M_PI
-        let MAX_LONG = M_PI
+        let MIN_LAT = -Double.pi/2
+        let MAX_LAT = Double.pi/2
+        let MIN_LONG = -Double.pi
+        let MAX_LONG = Double.pi
         
         let R: Double = 6378137
         let r = distance/R
@@ -155,12 +166,12 @@ open class QTRBBox: CustomStringConvertible {
                 
                 longMin = longRadian - deltaLong
                 if longMin < MIN_LONG {
-                    longMin += 2.0 * M_PI
+                    longMin += 2.0 * Double.pi
                 }
                 
                 longMax = longRadian + deltaLong
                 if longMax > MAX_LONG {
-                    longMax -= 2.0 * M_PI
+                    longMax -= 2.0 * Double.pi
                 }
             }
             else {

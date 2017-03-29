@@ -3,11 +3,11 @@ import CoreLocation
 
 //Basic Conversion functions.From DSAlgorithm.
 public func radianToDegrees(_ radians: Double) -> Double {
-    return (radians * (180/M_PI))
+    return (radians * (180/Double.pi))
 }
 
 public func degreesToRadians(_ degrees: Double) -> Double {
-    return (degrees * (M_PI/180))
+    return (degrees * (Double.pi/180))
 }
 
 /// - Returns 1/-1 for non  zero values.
@@ -50,6 +50,58 @@ public func equiRectangularDistanceBetweenCoordinates(_ coordinate: CLLocationCo
     return R * sqrt(pow(x, 2) + pow(y, 2))
 }
 
+func closestPointInNode(_ node: QTRNode, toPoint point: QTRNodePoint) -> (QTRNodePoint?, Double?) {
+    var distance: Double?
+    var returnPoint: QTRNodePoint?
+    
+    for p in node.points {
+        let temp = point.distanceFrom(p.coordinate2D)
+        if distance == nil || temp < distance! {
+            if temp > 80.0 {
+                distance = temp
+                returnPoint = p
+            }
+        }
+    }
+    
+    if returnPoint == nil && distance == nil && node.parent != nil{
+        (returnPoint,distance) = closestPointInNode(node.parent!, toPoint: point)
+    }
+    
+    return (returnPoint,distance ?? 80.0)
+}
+
+func scaledValue(_ x: Double, alpha: Double, beta: Double, max: Double) -> Double{
+    return max*(exp(-1.0 * alpha * pow(x, beta)))
+}
+
+public func nearestNeighbours(toPoint point: QTRNodePoint, startingAt node:QTRNode, andApply map: (QTRNodePoint) -> ()) {
+    let n = node.nodeContaining(point) ?? node
+    
+    let (p, d) = closestPointInNode(n, toPoint: point)
+    let factor = scaledValue(d!, alpha: 0.03, beta: 0.65, max: 3.0)
+//    p?.name
+    //
+    //    d!
+    //    d!*factor
+    let userB = QTRBBox(aroundCoordinate: point.coordinate2D, withBreadth: factor * d!)
+    //    node.getByTraversingUp(pointsIn: userB, andApply: { (nd: QTRNodePoint) -> () in
+    //        print(nd.name)
+    //    })
+    node.get(pointsIn: userB, andApply: map)
+    
+}
+
+public func nearestNeighboursAlternate(toPoint point: QTRNodePoint, startingAt node:QTRNode, canUseParent parent: Bool, andApply map: (QTRNodePoint) -> ()) {
+    let nodeContainer = node.nodeContaining(point)
+    
+    let nodeBoxSpan = parent ? nodeContainer!.parent!.bbox.span : nodeContainer!.bbox.span
+    
+    let bbox = QTRBBox(aroundCoordinate: point.coordinate2D, withSpan: nodeBoxSpan)
+    
+    node.get(pointsIn: bbox, andApply: map)
+    
+}
 
 func generateRandomPoint(inRange bbox: QTRBBox) -> CLLocationCoordinate2D {
     let p = Double(arc4random_uniform(250))*(bbox.highLatitude - bbox.lowLatitude)/100 + bbox.lowLatitude
