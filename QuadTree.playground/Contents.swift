@@ -198,6 +198,11 @@ class QTRNodePointView: MKAnnotationView {
         self.setup()
     }
     
+    public init(annotationView: MKAnnotationView) {
+        self.init()
+        self.setup()
+    }
+    
     private func centeredRect(forRect rect: CGRect, center: CGPoint) -> CGRect {
         return CGRect(x: center.x - rect.size.width/2.0,
                       y: center.y - rect.size.height/2.0,
@@ -292,12 +297,27 @@ class TestDelegate: NSObject, MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        let r = QTRNodePointView()
-        let x = annotation as! QTRNodePoint
-        r.isOpaque = false
-        r.count = Int(x.name)!
+        guard !(annotation is MKUserLocation) else {
+            return nil
+        }
         
-        return r
+        let x = annotation as! QTRNodePoint
+        let id = "anno_id"
+        var returnView: QTRNodePointView?
+        
+        if let dqv = mapView.dequeueReusableAnnotationView(withIdentifier: id) {
+            returnView = dqv as? QTRNodePointView
+            returnView?.isOpaque = false
+        } else {
+            returnView = QTRNodePointView(annotation: annotation, reuseIdentifier: id)
+            returnView?.isOpaque = false
+        }
+        
+        if let returnView = returnView {
+            returnView.count = Int(x.name)!
+        }
+        
+        return returnView
     }
     
     func mapView(_ mapView: MKMapView, didAdd views: [MKAnnotationView]) {
